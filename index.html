@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>∞ MANDALA GENESIS ∞</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600&family=Share+Tech+Mono&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#ccc;font-family:'Rajdhani',sans-serif;overflow:hidden}
+canvas#c{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0}
+#P{position:fixed;right:0;top:0;width:340px;height:100vh;background:rgba(0,0,0,.93);border-left:1px solid rgba(255,255,255,.05);z-index:10;overflow-y:auto;overflow-x:hidden;padding:10px 13px 60px;backdrop-filter:blur(30px);transition:transform .4s cubic-bezier(.22,1,.36,1);scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
+#P.h{transform:translateX(100%)}
+#P::-webkit-scrollbar{width:2px}#P::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08)}
+#T{position:fixed;right:340px;top:10px;z-index:11;background:rgba(0,0,0,.85);border:1px solid rgba(255,255,255,.08);color:#666;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font:11px 'Share Tech Mono',monospace;border-radius:3px 0 0 3px;transition:all .4s cubic-bezier(.22,1,.36,1)}
+#T:hover{color:#fff}#T.s{right:0;border-radius:3px}
+.st{font:8px/1 'Share Tech Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.22);margin:14px 0 6px;padding-bottom:2px;border-bottom:1px solid rgba(255,255,255,.03)}
+.cr{display:flex;align-items:center;gap:5px;margin:3px 0}
+.cr label{font-size:10.5px;color:rgba(255,255,255,.4);white-space:nowrap;min-width:72px}
+.cr input[type=range]{flex:1;height:2px;-webkit-appearance:none;background:rgba(255,255,255,.07);border-radius:1px;outline:none}
+.cr input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;background:#fff;border-radius:50%;cursor:pointer}
+.cr .v{font:8px 'Share Tech Mono',monospace;color:rgba(255,255,255,.25);min-width:22px;text-align:right}
+select{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:#999;font:10.5px 'Rajdhani',sans-serif;padding:2px 5px;border-radius:2px;outline:none;cursor:pointer;flex:1}
+select option{background:#0a0a0a}
+.br{display:flex;gap:3px;margin:4px 0;flex-wrap:wrap}
+.b{flex:1;min-width:44px;padding:3px 4px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.4);font:8px/1.3 'Share Tech Mono',monospace;letter-spacing:.5px;cursor:pointer;text-align:center;border-radius:2px;transition:all .12s;text-transform:uppercase;white-space:nowrap}
+.b:hover{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.18)}
+.b.a{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.22)}
+input[type=checkbox]{-webkit-appearance:none;appearance:none;width:11px;height:11px;border:1px solid rgba(255,255,255,.12);border-radius:2px;background:transparent;cursor:pointer;position:relative;flex-shrink:0}
+input[type=checkbox]:checked{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25)}
+input[type=checkbox]:checked::after{content:'✓';position:absolute;top:-2px;left:1px;font-size:9px;color:#fff}
+input[type=color]{-webkit-appearance:none;width:22px;height:14px;border:1px solid rgba(255,255,255,.08);border-radius:2px;background:transparent;cursor:pointer;padding:0}
+input[type=color]::-webkit-color-swatch-wrapper{padding:1px}
+input[type=color]::-webkit-color-swatch{border:none;border-radius:1px}
+#fps{position:fixed;left:8px;top:8px;font:8px 'Share Tech Mono',monospace;color:rgba(255,255,255,.15);z-index:5;pointer-events:none}
+.ring-row{display:flex;align-items:center;gap:3px;margin:1px 0}
+.ring-row span{font:8px 'Share Tech Mono',monospace;color:rgba(255,255,255,.25);width:16px}
+.ring-row select{font-size:9px;padding:1px 3px}
+
+/* Export modal */
+#exportModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.92);z-index:100;justify-content:center;align-items:center}
+#exportModal.show{display:flex}
+#exportBox{background:#0a0a0c;border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:28px 36px;min-width:380px;text-align:center}
+#exportBox h3{font:16px 'Rajdhani',sans-serif;font-weight:500;color:rgba(255,255,255,.7);margin-bottom:14px;letter-spacing:1px}
+#exportProgress{width:100%;height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin:12px 0;overflow:hidden}
+#exportBar{height:100%;background:rgba(255,255,255,.35);border-radius:2px;width:0%;transition:width .1s}
+#exportStatus{font:10px 'Share Tech Mono',monospace;color:rgba(255,255,255,.3);margin:8px 0}
+#exportActions{margin-top:16px;display:flex;gap:8px;justify-content:center}
+#exportActions .b{min-width:80px;padding:6px 12px;font-size:9px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="fps">--</div>
+<button id="T" onclick="tog()">≡</button>
+
+<!-- Export Modal -->
+<div id="exportModal">
+<div id="exportBox">
+  <h3>PNG Sequence Export</h3>
+  <div class="cr"><label>Duration (sec)</label><input type="range" id="expDur" min="1" max="30" value="5" oninput="this.nextElementSibling.textContent=this.value"><span class="v">5</span></div>
+  <div class="cr"><label>Resolution</label>
+    <select id="expRes"><option value="1080">1080p (1920×1080)</option><option value="720">720p (1280×720)</option><option value="1440">1440p (2560×1440)</option><option value="2160">4K (3840×2160)</option></select>
+  </div>
+  <div id="exportProgress"><div id="exportBar"></div></div>
+  <div id="exportStatus">Ready</div>
+  <div id="exportActions">
+    <button class="b" onclick="startExport()">Export</button>
+    <button class="b" onclick="cancelExport()">Cancel</button>
+  </div>
+</div>
+</div>
+
+<div id="P">
+<div class="st">Design Pattern</div>
+<div class="cr"><label>Mix mode</label>
+<select id="mixMode" onchange="mixChg()"><option value="single">Single</option><option value="perRing">Per-ring</option><option value="autoMix">Auto cycle</option></select></div>
+<div id="spArea">
+<div class="br"><button class="b a" data-p="mechPetal" onclick="sp(this)">Mech Petal</button><button class="b" data-p="sharpBlade" onclick="sp(this)">Blade</button><button class="b" data-p="seraphWing" onclick="sp(this)">Seraph</button></div>
+<div class="br"><button class="b" data-p="gearCluster" onclick="sp(this)">Gear</button><button class="b" data-p="dotRay" onclick="sp(this)">Dot Ray</button><button class="b" data-p="cathedral" onclick="sp(this)">Gothic</button></div>
+<div class="br"><button class="b" data-p="turbineFan" onclick="sp(this)">Turbine</button><button class="b" data-p="circuitTrace" onclick="sp(this)">Circuit</button><button class="b" data-p="celticBraid" onclick="sp(this)">Celtic</button></div>
+<div class="br"><button class="b" data-p="sacredGeo" onclick="sp(this)">Sacred</button><button class="b" data-p="crystalShard" onclick="sp(this)">Crystal</button><button class="b" data-p="rayBurst" onclick="sp(this)">Ray Burst</button></div>
+<div class="br"><button class="b" data-p="helixCoil" onclick="sp(this)">Helix</button><button class="b" data-p="arrowHead" onclick="sp(this)">Arrow</button><button class="b" data-p="chainLink" onclick="sp(this)">Chain</button></div>
+</div>
+<div id="prArea" style="display:none"><div id="ringRows"></div></div>
+
+<div class="st">Symmetry</div>
+<div class="cr"><label>Folds</label><input type=range id="sym" min=3 max=24 value=8 oninput="uv(this)"><span class="v">8</span></div>
+<div class="cr"><label>Mirror</label><input type=checkbox id="mirror" checked></div>
+
+<div class="st">Structure</div>
+<div class="cr"><label>Rings</label><input type=range id="rings" min=1 max=14 value=7 oninput="uv(this);buildRR()"><span class="v">7</span></div>
+<div class="cr"><label>Spacing</label><input type=range id="rSp" min=15 max=130 value=52 oninput="uv(this)"><span class="v">52</span></div>
+<div class="cr"><label>Size</label><input type=range id="eSz" min=5 max=120 value=40 oninput="uv(this)"><span class="v">40</span></div>
+<div class="cr"><label>Complexity</label><input type=range id="cplx" min=1 max=14 value=8 oninput="uv(this)"><span class="v">8</span></div>
+<div class="cr"><label>Taper</label><input type=range id="taper" min=0 max=100 value=40 oninput="uv(this)"><span class="v">40</span></div>
+<div class="cr"><label>Detail</label><input type=range id="det" min=0 max=100 value=80 oninput="uv(this)"><span class="v">80</span></div>
+<div class="cr"><label>Size var</label><input type=range id="sVar" min=0 max=100 value=50 oninput="uv(this)"><span class="v">50</span></div>
+
+<div class="st">Center Core</div>
+<div class="cr"><label>Style</label>
+<select id="core"><option value="gearCore">Gear Mechanism</option><option value="eyeCore">All-Seeing Eye</option><option value="compassCore">Compass Rose</option><option value="sigilCore">Arcane Sigil</option><option value="flowerCore">Sacred Flower</option><option value="spiralCore">Fibonacci Spiral</option><option value="clockCore">Clockwork</option><option value="none">None</option></select></div>
+<div class="cr"><label>Size</label><input type=range id="cSz" min=20 max=180 value=72 oninput="uv(this)"><span class="v">72</span></div>
+<div class="cr"><label>Layers</label><input type=range id="cLay" min=1 max=8 value=4 oninput="uv(this)"><span class="v">4</span></div>
+
+<div class="st">Decorations</div>
+<div class="cr"><label>Ring arcs</label><input type=checkbox id="dA" checked></div>
+<div class="cr"><label>Dot rings</label><input type=checkbox id="dD" checked></div>
+<div class="cr"><label>Tick marks</label><input type=checkbox id="dT" checked></div>
+<div class="cr"><label>Hash groups</label><input type=checkbox id="dH" checked></div>
+<div class="cr"><label>Ornaments</label><input type=checkbox id="dO" checked></div>
+<div class="cr"><label>Scallops</label><input type=checkbox id="dS" checked></div>
+
+<div class="st">Animation</div>
+<div class="cr"><label>Growth</label><input type=range id="gSpd" min=1 max=100 value=28 oninput="uv(this)"><span class="v">28</span></div>
+<div class="cr"><label>Rotation</label><input type=range id="rSpd" min=0 max=100 value=14 oninput="uv(this)"><span class="v">14</span></div>
+<div class="cr"><label>Pulse</label><input type=range id="pulse" min=0 max=100 value=18 oninput="uv(this)"><span class="v">18</span></div>
+<div class="cr"><label>Alt rotate</label><input type=checkbox id="altR" checked></div>
+<div class="cr"><label>Mode</label>
+<select id="gMode"><option value="outward">Outward</option><option value="cascade">Cascade</option><option value="breathe">Breathe</option><option value="infinite">Infinite</option></select></div>
+
+<div class="st">Render</div>
+<div class="cr"><label>Line width</label><input type=range id="lw" min=.3 max=5 value=1.1 step=.1 oninput="uv(this)"><span class="v">1.1</span></div>
+<div class="cr"><label>Glow</label><input type=range id="glow" min=0 max=100 value=35 oninput="uv(this)"><span class="v">35</span></div>
+<div class="cr"><label>Stroke</label><input type=color id="cSt" value="#ffffff"></div>
+<div class="cr"><label>Glow color</label><input type=color id="cGl" value="#1a3388"></div>
+<div class="cr"><label>Background</label><input type=color id="cBg" value="#000003"></div>
+<div class="cr"><label>BG noise</label><input type=range id="bgN" min=0 max=100 value=16 oninput="uv(this)"><span class="v">16</span></div>
+
+<div class="st">Actions</div>
+<div class="br">
+  <button class="b" onclick="RST()">Reset</button>
+  <button class="b" onclick="RND()">Random</button>
+  <button class="b" id="pauseB" onclick="TPAUSE()">Pause</button>
+</div>
+<div class="br">
+  <button class="b" onclick="PNG()">Screenshot</button>
+  <button class="b" onclick="showExport()">Export Frames</button>
+</div>
+
+<div class="st">Presets</div>
+<div class="br"><button class="b" onclick="PRE('mech1')">機械花</button><button class="b" onclick="PRE('seraph1')">熾天使</button><button class="b" onclick="PRE('blade1')">刃輪</button></div>
+<div class="br"><button class="b" onclick="PRE('cosmic1')">宇宙眼</button><button class="b" onclick="PRE('mix1')">混合曼荼羅</button><button class="b" onclick="PRE('mix2')">聖回路</button></div>
+<div class="br"><button class="b" onclick="PRE('clock1')">時計仕掛</button><button class="b" onclick="PRE('mix3')">黒曜聖堂</button></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// GLOBALS
+// ══════════════════════════════════════════════
+const CC=document.getElementById('c');let X=CC.getContext('2d');
+let W,H,cx,cy,paused=0,time=0,gp=0,nC=null,infR=[];
+const TAU=Math.PI*2,PI=Math.PI,HP=PI/2;
+const PATS=['mechPetal','sharpBlade','seraphWing','gearCluster','dotRay','cathedral','turbineFan','circuitTrace','celticBraid','sacredGeo','crystalShard','chainLink','rayBurst','helixCoil','arrowHead'];
+let ringPats=[],autoIdx=0,autoT=0;
+let exporting=false,exportCancel=false;
+
+function resize(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;CC.width=W*d;CC.height=H*d;CC.style.width=W+'px';CC.style.height=H+'px';X.setTransform(d,0,0,d,0,0);cx=W/2;cy=H/2;mkN()}
+function mkN(){nC=document.createElement('canvas');nC.width=W;nC.height=H;const x=nC.getContext('2d'),im=x.createImageData(W,H);for(let i=0;i<im.data.length;i+=4){const v=Math.random()*18;im.data[i]=v;im.data[i+1]=v;im.data[i+2]=v+Math.random()*22;im.data[i+3]=255}x.putImageData(im,0,0)}
+addEventListener('resize',resize);resize();
+
+function $(id){return document.getElementById(id)}
+function V(id){return parseFloat($(id).value)}
+function CK(id){return $(id).checked}
+function SL(id){return $(id).value}
+function uv(e){e.nextElementSibling.textContent=e.value}
+function tog(){$('P').classList.toggle('h');$('T').classList.toggle('s')}
+function sp(b){document.querySelectorAll('[data-p]').forEach(x=>x.classList.remove('a'));b.classList.add('a')}
+function getP(){const a=document.querySelector('[data-p].a');return a?a.dataset.p:'mechPetal'}
+function TPAUSE(){paused=!paused;$('pauseB').textContent=paused?'Play':'Pause';if(!paused)requestAnimationFrame(loop)}
+function RST(){gp=0;infR=[];time=0;autoIdx=0;autoT=0}
+function PNG(){const a=document.createElement('a');a.download='mandala_'+Date.now()+'.png';a.href=CC.toDataURL();a.click()}
+function mixChg(){$('spArea').style.display=SL('mixMode')==='perRing'?'none':'';$('prArea').style.display=SL('mixMode')==='perRing'?'':'none';if(SL('mixMode')==='perRing')buildRR()}
+function buildRR(){const n=V('rings'),c=$('ringRows');c.innerHTML='';ringPats=[];for(let i=0;i<n;i++){const r=document.createElement('div');r.className='ring-row';const s=document.createElement('span');s.textContent=i+1;const sel=document.createElement('select');PATS.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o)});sel.value=PATS[i%PATS.length];sel.dataset.ri=i;r.appendChild(s);r.appendChild(sel);c.appendChild(r);ringPats.push(PATS[i%PATS.length]);sel.addEventListener('change',function(){ringPats[+this.dataset.ri]=this.value})}}
+buildRR();
+function getPatRing(ri){const m=SL('mixMode');if(m==='single')return getP();if(m==='perRing')return ringPats[ri]||'mechPetal';if(m==='autoMix')return PATS[(ri+autoIdx)%PATS.length];return getP()}
+
+// ══════════════════════════════════════════════
+// PRIMITIVES
+// ══════════════════════════════════════════════
+function gear(ox,oy,ir,or,n,rot){X.beginPath();for(let i=0;i<n;i++){const s=TAU/n;const a0=rot+i*s,a1=a0+s*.25,a2=a0+s*.48,a3=a0+s*.75;[[a0,ir],[a1,ir],[a1,or],[a2,or],[a2,ir],[a3,ir]].forEach(([a,r],j)=>{const px=ox+Math.cos(a)*r,py=oy+Math.sin(a)*r;(i===0&&j===0)?X.moveTo(px,py):X.lineTo(px,py)})}X.closePath();X.stroke()}
+function dots(ox,oy,r,n,dr,rot){for(let i=0;i<n;i++){const a=rot+i/n*TAU;X.beginPath();X.arc(ox+Math.cos(a)*r,oy+Math.sin(a)*r,dr,0,TAU);X.fill()}}
+function spoke(ox,oy,r1,r2,n,rot,w){const o=X.lineWidth;X.lineWidth=w;for(let i=0;i<n;i++){const a=rot+i/n*TAU;X.beginPath();X.moveTo(ox+Math.cos(a)*r1,oy+Math.sin(a)*r1);X.lineTo(ox+Math.cos(a)*r2,oy+Math.sin(a)*r2);X.stroke()}X.lineWidth=o}
+function ci(ox,oy,r){X.beginPath();X.arc(ox,oy,r,0,TAU);X.stroke()}
+function fc(ox,oy,r){X.beginPath();X.arc(ox,oy,r,0,TAU);X.fill()}
+function dm(ox,oy,s){X.beginPath();X.moveTo(ox,oy-s);X.lineTo(ox+s,oy);X.lineTo(ox,oy+s);X.lineTo(ox-s,oy);X.closePath();X.stroke()}
+function wavyCircle(ox,oy,r,waves,amp,rot){X.beginPath();for(let i=0;i<=720;i++){const a=i*PI/360+rot;const rr=r+amp*Math.sin(a*waves);const px=ox+Math.cos(a)*rr,py=oy+Math.sin(a)*rr;i===0?X.moveTo(px,py):X.lineTo(px,py)}X.closePath();X.stroke()}
+
+// ══════════════════════════════════════════════
+// REFINED CENTER CORES
+// ══════════════════════════════════════════════
+function drawCore(t){
+  const s=SL('core'),sz=V('cSz'),lay=V('cLay'),lw=V('lw');
+  if(s==='none')return;
+  X.lineWidth=lw;
+
+  if(s==='gearCore'){
+    // multiple nested gears with scallop borders and wavy rings
+    for(let i=0;i<lay;i++){
+      const r=sz*(.18+i*.18),teeth=10+i*6,rot=t*((i%2)?-.22:.22)*(1+i*.05);
+      gear(cx,cy,r*.78,r,teeth,rot);
+      X.lineWidth=lw*.45;ci(cx,cy,r*.72);
+      // wavy decoration between gears
+      if(i>0){X.lineWidth=lw*.25;wavyCircle(cx,cy,r*.72-3,teeth*2,1.5,rot*-1)}
+    }
+    // outer scallop border
+    const outr=sz*(.18+lay*.18);
+    X.lineWidth=lw*.3;
+    const sn=20+lay*6;
+    for(let i=0;i<sn;i++){const a=i/sn*TAU+t*.08;X.beginPath();X.arc(cx+Math.cos(a)*(outr+5),cy+Math.sin(a)*(outr+5),3,0,TAU);X.stroke()}
+    X.lineWidth=lw;
+    // spokes with varying thickness
+    for(let i=0;i<8;i++){const a=t*.15+i/8*TAU;X.lineWidth=lw*(.3+.2*Math.sin(i*2));X.beginPath();X.moveTo(cx+Math.cos(a)*sz*.06,cy+Math.sin(a)*sz*.06);X.lineTo(cx+Math.cos(a)*sz*.2,cy+Math.sin(a)*sz*.2);X.stroke()}
+    X.lineWidth=lw;
+    fc(cx,cy,sz*.07);ci(cx,cy,sz*.1);
+    // concentric micro-rings
+    for(let i=0;i<5;i++){X.lineWidth=lw*(.12+i*.04);ci(cx,cy,sz*(.065+i*.012))}
+    X.lineWidth=lw;ci(cx,cy,outr+9);X.lineWidth=lw*.3;ci(cx,cy,outr+12);
+  }
+
+  if(s==='eyeCore'){
+    // double diamond frame
+    dm(cx,cy,sz*1.3);X.lineWidth=lw*.6;dm(cx,cy,sz*1.2);X.lineWidth=lw;
+    // concentric iris rings with varying weight
+    for(let i=0;i<lay+4;i++){X.lineWidth=lw*(.15+Math.abs(Math.sin(i*.6))*.35);ci(cx,cy,sz*(.06+i*.15))}
+    X.lineWidth=lw;
+    // radiating iris lines - two layers
+    spoke(cx,cy,sz*.1,sz*.55,28,t*.1,lw*.2);
+    spoke(cx,cy,sz*.15,sz*.45,14,t*-.08,lw*.35);
+    // wavy iris boundary
+    X.lineWidth=lw*.35;wavyCircle(cx,cy,sz*.6,18,.03*sz,t*1.8);
+    // dot rings - two concentric
+    dots(cx,cy,sz*.85,36,1.2,t*.06);
+    dots(cx,cy,sz*1.05,56,.8,-t*.04);
+    dots(cx,cy,sz*.72,20,1.6,t*.1);
+    // pupil: layered
+    fc(cx,cy,sz*.07);
+    for(let i=0;i<6;i++){X.lineWidth=lw*(.1+i*.03);ci(cx,cy,sz*(.05+i*.008))}
+    X.lineWidth=lw;ci(cx,cy,sz*1.08);X.lineWidth=lw*.25;ci(cx,cy,sz*1.14);
+  }
+
+  if(s==='compassCore'){
+    ci(cx,cy,sz);ci(cx,cy,sz*.9);X.lineWidth=lw*.4;ci(cx,cy,sz*.85);X.lineWidth=lw;
+    dots(cx,cy,sz*.95,56,.9,0);
+    // 4 elaborate cardinal arrows
+    for(let i=0;i<4;i++){
+      const a=t*.06+i*HP;const c=Math.cos,sn=Math.sin;
+      // main point
+      X.beginPath();X.moveTo(cx+c(a)*sz*.22,cy+sn(a)*sz*.22);
+      X.lineTo(cx+c(a-.1)*sz,cy+sn(a-.1)*sz);
+      X.lineTo(cx+c(a-.04)*sz*1.1,cy+sn(a-.04)*sz*1.1);
+      X.lineTo(cx+c(a)*sz*1.35,cy+sn(a)*sz*1.35);
+      X.lineTo(cx+c(a+.04)*sz*1.1,cy+sn(a+.04)*sz*1.1);
+      X.lineTo(cx+c(a+.1)*sz,cy+sn(a+.1)*sz);
+      X.closePath();X.stroke();
+      // inner line
+      X.lineWidth=lw*.4;X.beginPath();X.moveTo(cx+c(a)*sz*.3,cy+sn(a)*sz*.3);X.lineTo(cx+c(a)*sz*1.2,cy+sn(a)*sz*1.2);X.stroke();X.lineWidth=lw;
+    }
+    // ordinal lines with cross ticks
+    for(let i=0;i<4;i++){const a=t*.06+i*HP+PI/4;X.lineWidth=lw*.5;X.beginPath();X.moveTo(cx+Math.cos(a)*sz*.3,cy+Math.sin(a)*sz*.3);X.lineTo(cx+Math.cos(a)*sz*.88,cy+Math.sin(a)*sz*.88);X.stroke();
+      // cross tick
+      const mid=sz*.6;X.lineWidth=lw*.3;X.beginPath();X.moveTo(cx+Math.cos(a-0.06)*mid,cy+Math.sin(a-0.06)*mid);X.lineTo(cx+Math.cos(a+0.06)*mid,cy+Math.sin(a+0.06)*mid);X.stroke()
+    }
+    X.lineWidth=lw;spoke(cx,cy,sz*.08,sz*.2,16,t*.06,lw*.25);
+    fc(cx,cy,sz*.06);ci(cx,cy,sz*.12);ci(cx,cy,sz*.16);
+  }
+
+  if(s==='sigilCore'){
+    // nested star polygons with increasing sides
+    for(let r=0;r<lay;r++){
+      const sr=sz*(.2+r*.2),sides=3+r,rot=t*.12*((r%2)?-1:1);
+      X.beginPath();for(let i=0;i<sides;i++){const a=rot+i*TAU/sides-HP;X.lineTo(cx+Math.cos(a)*sr,cy+Math.sin(a)*sr)}X.closePath();X.stroke();
+      // inner star
+      X.beginPath();for(let i=0;i<sides;i++){const a=rot+i*TAU/sides+TAU/sides/2-HP;X.lineTo(cx+Math.cos(a)*sr*.7,cy+Math.sin(a)*sr*.7)}X.closePath();X.stroke();
+      // connecting vertices to center of opposite edges
+      X.lineWidth=lw*.25;
+      for(let i=0;i<sides;i++){const a=rot+i*TAU/sides-HP;const a2=rot+(i+Math.floor(sides/2))*TAU/sides-HP;X.beginPath();X.moveTo(cx+Math.cos(a)*sr,cy+Math.sin(a)*sr);X.lineTo(cx+Math.cos(a2)*sr*.5,cy+Math.sin(a2)*sr*.5);X.stroke()}
+      X.lineWidth=lw;
+    }
+    ci(cx,cy,sz);dots(cx,cy,sz*1.04,42,1,t*.04);fc(cx,cy,sz*.05);
+  }
+
+  if(s==='flowerCore'){
+    const p=5+lay*3;
+    for(let r=0;r<lay;r++){
+      const pr=sz*(.18+r*.18);
+      X.lineWidth=lw*(.4+r*.15);
+      wavyCircle(cx,cy,pr,p,.15*pr,t*.1*((r%2)?-1:1));
+    }
+    // seed dots at center
+    dots(cx,cy,sz*.12,8,1.5,t*.15);
+    X.lineWidth=lw;ci(cx,cy,sz*.88);fc(cx,cy,sz*.05);
+    // petal outline highlights
+    X.lineWidth=lw*.2;
+    for(let i=0;i<p;i++){const a=i/p*TAU+t*.08;X.beginPath();X.moveTo(cx+Math.cos(a)*sz*.2,cy+Math.sin(a)*sz*.2);X.lineTo(cx+Math.cos(a)*sz*.8,cy+Math.sin(a)*sz*.8);X.stroke()}
+    X.lineWidth=lw;
+  }
+
+  if(s==='spiralCore'){
+    for(let r=0;r<lay;r++){
+      X.lineWidth=lw*(.3+r*.1);
+      X.beginPath();
+      const maxA=PI*12;
+      for(let a=0;a<maxA;a+=.02){const sr=sz*.04+a*sz*.022/(r+1);const px=cx+Math.cos(a+t*.2+r*1.8)*sr,py=cy+Math.sin(a+t*.2+r*1.8)*sr;a===0?X.moveTo(px,py):X.lineTo(px,py);if(sr>sz*.9)break}
+      X.stroke();
+    }
+    fc(cx,cy,sz*.04);X.lineWidth=lw;ci(cx,cy,sz*.9);
+    // golden ratio markers
+    X.lineWidth=lw*.2;
+    for(let i=0;i<8;i++){const a=i*2.399+t*.2;const r=sz*(.1+i*.1);fc(cx+Math.cos(a)*r,cy+Math.sin(a)*r,1.5)}
+    X.lineWidth=lw;
+  }
+
+  if(s==='clockCore'){
+    // clock face with Roman-style markers
+    ci(cx,cy,sz);ci(cx,cy,sz*.95);ci(cx,cy,sz*.88);
+    // 12 hour markers
+    for(let i=0;i<12;i++){
+      const a=i/12*TAU-HP;
+      const len=(i%3===0)?sz*.12:sz*.06;
+      const w2=(i%3===0)?lw*.8:lw*.4;
+      X.lineWidth=w2;
+      X.beginPath();X.moveTo(cx+Math.cos(a)*(sz*.88-len),cy+Math.sin(a)*(sz*.88-len));
+      X.lineTo(cx+Math.cos(a)*sz*.88,cy+Math.sin(a)*sz*.88);X.stroke();
+    }
+    // 60 minute ticks
+    X.lineWidth=lw*.15;
+    for(let i=0;i<60;i++){const a=i/60*TAU;X.beginPath();X.moveTo(cx+Math.cos(a)*sz*.91,cy+Math.sin(a)*sz*.91);X.lineTo(cx+Math.cos(a)*sz*.95,cy+Math.sin(a)*sz*.95);X.stroke()}
+    // hands
+    const ha=t*.05,ma=t*.6,sa=t*6;
+    X.lineWidth=lw*1.2;X.beginPath();X.moveTo(cx,cy);X.lineTo(cx+Math.cos(ha-HP)*sz*.4,cy+Math.sin(ha-HP)*sz*.4);X.stroke();
+    X.lineWidth=lw*.7;X.beginPath();X.moveTo(cx,cy);X.lineTo(cx+Math.cos(ma-HP)*sz*.6,cy+Math.sin(ma-HP)*sz*.6);X.stroke();
+    X.lineWidth=lw*.3;X.beginPath();X.moveTo(cx+Math.cos(sa+HP)*sz*.1,cy+Math.sin(sa+HP)*sz*.1);X.lineTo(cx+Math.cos(sa-HP)*sz*.7,cy+Math.sin(sa-HP)*sz*.7);X.stroke();
+    // center pivot
+    fc(cx,cy,sz*.04);ci(cx,cy,sz*.06);
+    // inner gears
+    X.lineWidth=lw;
+    for(let i=0;i<Math.min(lay,3);i++){
+      const gx=cx+Math.cos(i*TAU/3+t*.3)*sz*.3;
+      const gy=cy+Math.sin(i*TAU/3+t*.3)*sz*.3;
+      gear(gx,gy,sz*.1,sz*.14,8+i*3,-t*((i%2)?1:-1));
+    }
+    X.lineWidth=lw*.25;dots(cx,cy,sz*.98,36,1,0);
+    X.lineWidth=lw;
+  }
+
+  // universal outer border
+  X.lineWidth=lw;ci(cx,cy,sz*1.1);X.lineWidth=lw*.2;ci(cx,cy,sz*1.15);X.lineWidth=lw;
+}
+
+// ══════════════════════════════════════════════
+// ELEMENT WRAPPER
+// ══════════════════════════════════════════════
+function elemAt(a,d,sz,t,ri,fn){X.save();X.translate(cx,cy);X.rotate(a);X.translate(d,0);fn(sz,t,ri,a);X.restore()}
+
+// ══════════════════════════════════════════════
+// 15 REFINED PATTERN DRAWERS
+// ══════════════════════════════════════════════
+
+function drawMechPetal(sz,t,ri){
+  const tp=V('taper')/100,cp=V('cplx'),dt=V('det')/100;
+  const bw=sz*(.2+tp*.32);const ol=X.lineWidth;
+  // double-walled petal
+  X.beginPath();X.moveTo(0,0);X.bezierCurveTo(sz*.18,-bw*.85,sz*.5,-bw*1.05,sz*.78,-bw*.38);X.bezierCurveTo(sz*.92,-bw*.12,sz*.98,0,sz,0);X.bezierCurveTo(sz*.92,bw*.12,sz*.78,bw*.38,sz*.78,bw*.38);X.bezierCurveTo(sz*.5,bw*1.05,sz*.18,bw*.85,0,0);X.stroke();
+  // inner wall
+  X.lineWidth=ol*.4;
+  const iw=bw*.7;
+  X.beginPath();X.moveTo(sz*.06,0);X.bezierCurveTo(sz*.2,-iw*.7,sz*.48,-iw*.85,sz*.72,-iw*.25);X.bezierCurveTo(sz*.82,0,sz*.72,iw*.25,sz*.72,iw*.25);X.bezierCurveTo(sz*.48,iw*.85,sz*.2,iw*.7,sz*.06,0);X.stroke();
+  // spine
+  X.lineWidth=ol*.35;X.beginPath();X.moveTo(sz*.04,0);X.lineTo(sz*.96,0);X.stroke();
+  // ribs
+  X.lineWidth=ol*.25;
+  for(let i=1;i<=cp;i++){const f=i/(cp+1);const rx=sz*f*.94;const rw=bw*(1-f*.65)*dt;X.beginPath();X.moveTo(rx,-rw);X.lineTo(rx,rw);X.stroke()}
+  // hatch blocks
+  if(cp>3){
+    X.lineWidth=ol*.3;
+    const bn=Math.min(6,Math.floor(cp*.5));
+    for(let i=0;i<bn;i++){
+      const bx=sz*(.5+i*.085),bh=bw*(.18-i*.025)*(1-tp*.3);
+      if(bh<1)continue;
+      X.strokeRect(bx-2.5,-bh-bw*.2,5,bh);X.strokeRect(bx-2.5,bw*.2,5,bh);
+      for(let j=0;j<3;j++){X.beginPath();X.moveTo(bx-2.5,-bh-bw*.2+bh*(j+1)/4);X.lineTo(bx+2.5,-bh-bw*.2+bh*(j+1)/4);X.stroke();X.beginPath();X.moveTo(bx-2.5,bw*.2+bh*(j+1)/4);X.lineTo(bx+2.5,bw*.2+bh*(j+1)/4);X.stroke()}
+    }
+  }
+  // edge detail dots
+  if(dt>.5){X.lineWidth=ol*.2;const en=Math.floor(cp*2);for(let i=0;i<en;i++){const f=(i+1)/(en+1);const px=sz*f*.9;const py=bw*(1-f*.55)*.92;fc(px,-py,1);fc(px,py,1)}}
+  X.lineWidth=ol;
+}
+
+function drawSharpBlade(sz,t,ri){
+  const tp=V('taper')/100,cp=V('cplx'),ol=X.lineWidth;
+  const w=sz*.1*(1-tp*.35);
+  // outer blade
+  X.beginPath();X.moveTo(0,-w*.4);X.lineTo(sz*.12,-w*1.2);X.lineTo(sz*.35,-w*.9);X.lineTo(sz*.65,-w*.45);X.lineTo(sz,0);X.lineTo(sz*.65,w*.45);X.lineTo(sz*.35,w*.9);X.lineTo(sz*.12,w*1.2);X.lineTo(0,w*.4);X.closePath();X.stroke();
+  // inner blade
+  X.lineWidth=ol*.5;
+  X.beginPath();X.moveTo(sz*.05,0);X.lineTo(sz*.2,-w*.6);X.lineTo(sz*.5,-w*.3);X.lineTo(sz*.88,0);X.lineTo(sz*.5,w*.3);X.lineTo(sz*.2,w*.6);X.closePath();X.stroke();
+  // center line
+  X.lineWidth=ol*.3;X.beginPath();X.moveTo(0,0);X.lineTo(sz,0);X.stroke();
+  // serrations
+  if(cp>4){X.lineWidth=ol*.25;for(let i=0;i<cp;i++){const f=(i+1)/(cp+1);const bx=sz*f;X.beginPath();X.moveTo(bx,-w*(1-f)*.85);X.lineTo(bx+2,0);X.lineTo(bx,w*(1-f)*.85);X.stroke()}}
+  // dot trails
+  const dn=Math.floor(cp*3);
+  for(let i=0;i<dn;i++){const f=(i+.5)/dn;fc(sz*f,-w*1.3-1.5-i*.25,.9);fc(sz*f,w*1.3+1.5+i*.25,.9)}
+  X.lineWidth=ol;
+}
+
+function drawSeraphWing(sz,t,ri){
+  const cp=V('cplx'),tp=V('taper')/100,ol=X.lineWidth;
+  const fn=6+Math.floor(cp*1.4);
+  // spine
+  X.lineWidth=ol*.6;X.beginPath();X.moveTo(0,0);X.bezierCurveTo(sz*.3,-sz*.015,sz*.7,sz*.008,sz*.96,0);X.stroke();
+  X.lineWidth=ol;
+  // layered feathers
+  for(let i=0;i<fn;i++){
+    const f=i/fn,fx=sz*(.01+f*.9);
+    const fLen=sz*(.28-f*.14)*(1-tp*.15);
+    const spread=f*.22*sz;
+    // primary feather
+    X.lineWidth=ol*(.6-.2*f);
+    X.beginPath();X.moveTo(fx,0);X.bezierCurveTo(fx+fLen*.15,-fLen*.4-spread*.2,fx+fLen*.45,-fLen-spread,fx+fLen,-fLen*.15-spread);X.stroke();
+    X.beginPath();X.moveTo(fx,0);X.bezierCurveTo(fx+fLen*.15,fLen*.4+spread*.2,fx+fLen*.45,fLen+spread,fx+fLen,fLen*.15+spread);X.stroke();
+    // secondary (inner) feather line
+    if(i%2===0){
+      X.lineWidth=ol*.2;
+      X.beginPath();X.moveTo(fx+2,0);X.bezierCurveTo(fx+fLen*.2,-fLen*.25-spread*.15,fx+fLen*.5,-fLen*.7-spread*.7,fx+fLen*.9,-fLen*.1-spread*.85);X.stroke();
+      X.beginPath();X.moveTo(fx+2,0);X.bezierCurveTo(fx+fLen*.2,fLen*.25+spread*.15,fx+fLen*.5,fLen*.7+spread*.7,fx+fLen*.9,fLen*.1+spread*.85);X.stroke();
+    }
+  }
+  // barb detail
+  if(cp>6){X.lineWidth=ol*.15;for(let i=0;i<fn*2;i++){const fx=sz*(.03+i/(fn*2)*.88);X.beginPath();X.moveTo(fx,-1);X.lineTo(fx+2.5,-sz*.035);X.stroke();X.beginPath();X.moveTo(fx,1);X.lineTo(fx+2.5,sz*.035);X.stroke()}}
+  X.lineWidth=ol;
+}
+
+function drawGearCluster(sz,t,ri){
+  const cp=V('cplx'),ol=X.lineWidth;
+  const r1=sz*.38,teeth=8+Math.floor(cp*1.5);
+  gear(0,0,r1*.76,r1,teeth,t*((ri%2)?-.35:.35));
+  X.lineWidth=ol*.45;ci(0,0,r1*.7);
+  const r2=r1*.48;gear(0,0,r2*.72,r2,Math.max(5,teeth-5),t*((ri%2)?.55:-.55));
+  X.lineWidth=ol*.3;ci(0,0,r2*.65);
+  spoke(0,0,r2*.18,r1*.65,Math.max(4,Math.floor(cp*.7)),t*.18,ol*.35);
+  fc(0,0,r1*.1);ci(0,0,r1*.15);
+  // outer decorative ring
+  X.lineWidth=ol*.25;ci(0,0,r1*1.1);dots(0,0,r1*1.15,teeth,1,t*.12);
+  // micro teeth ring
+  if(cp>6){X.lineWidth=ol*.2;gear(0,0,r1*1.05,r1*1.12,teeth*2,-t*.15)}
+  X.lineWidth=ol;
+}
+
+function drawDotRay(sz,t,ri){
+  const cp=V('cplx'),tp=V('taper')/100,ol=X.lineWidth;
+  const rays=3+Math.floor(cp*.5);
+  const spread=.1;
+  for(let r=0;r<rays;r++){
+    const a=(r/(rays-1)-.5)*spread*2;
+    const dn=10+Math.floor(cp*3.5);
+    for(let i=0;i<dn;i++){const f=(i+1)/(dn+1);const dx=sz*f;const dy=a*dx;const dr=1.6*(1-f*tp*.4)*(1-.3*Math.abs(r/(rays-1)-.5));fc(dx,dy,dr)}
+  }
+  X.lineWidth=ol*.4;X.beginPath();X.moveTo(sz*.02,0);X.lineTo(sz*.97,0);X.stroke();
+  ci(0,0,sz*.05);fc(0,0,sz*.025);
+  X.lineWidth=ol;
+}
+
+function drawCathedral(sz,t,ri){
+  const cp=V('cplx'),w=sz*.2,ol=X.lineWidth;
+  // pointed arch
+  X.beginPath();X.moveTo(0,w);X.bezierCurveTo(sz*.12,w*.7,sz*.45,-w*.7,sz,0);X.stroke();
+  X.beginPath();X.moveTo(0,-w);X.bezierCurveTo(sz*.12,-w*.7,sz*.45,w*.7,sz,0);X.stroke();
+  // tracery
+  const d=Math.max(1,Math.floor(cp*.35));
+  X.lineWidth=ol*.4;
+  for(let i=1;i<=d;i++){const f=i/(d+1),dx=sz*f;const ww=w*(1-f*.5);X.beginPath();X.moveTo(dx,-ww*.65);X.lineTo(dx,ww*.65);X.stroke();X.beginPath();X.arc(dx,-ww*.15,ww*.28,PI*.35,PI*.65);X.stroke();X.beginPath();X.arc(dx,ww*.15,ww*.28,-PI*.65,-PI*.35);X.stroke()}
+  // rosette
+  if(cp>4){const rx=sz*.5,rr=w*.28;ci(rx,0,rr);const pet=6;for(let i=0;i<pet;i++){const a=i/pet*TAU+t*.15;ci(rx+Math.cos(a)*rr*.5,Math.sin(a)*rr*.5,rr*.32)}}
+  X.lineWidth=ol*.3;X.beginPath();X.moveTo(0,w*1.08);X.lineTo(0,-w*1.08);X.stroke();
+  X.lineWidth=ol;
+}
+
+function drawTurbineFan(sz,t,ri){
+  const tp=V('taper')/100,cp=V('cplx'),ol=X.lineWidth,w=sz*.14*(1-tp*.2);
+  X.beginPath();X.moveTo(0,w*.15);X.bezierCurveTo(sz*.08,-w*1,sz*.4,-w*1.4,sz*.82,-w*.3);X.lineTo(sz,0);X.bezierCurveTo(sz*.55,w*.18,sz*.2,w*.5,0,w*.15);X.stroke();
+  X.lineWidth=ol*.35;X.beginPath();X.moveTo(sz*.04,w*.08);X.bezierCurveTo(sz*.25,-w*.35,sz*.55,-w*.55,sz*.88,-w*.04);X.stroke();
+  if(cp>3){for(let i=0;i<cp;i++){const f=(i+1)/(cp+1);fc(sz*f*.85,-w*(.15+.35*(1-f)),1)}}
+  X.lineWidth=ol*.5;X.strokeRect(-2,-w*.35,4,w*.7);
+  if(cp>5){X.lineWidth=ol*.2;for(let i=0;i<3;i++){const xx=sz*(.82+i*.04);X.beginPath();X.moveTo(xx,-w*.18*(1-i*.2));X.lineTo(xx,0);X.stroke()}}
+  X.lineWidth=ol;
+}
+
+function drawCircuitTrace(sz,t,ri){
+  const cp=V('cplx'),dt=V('det')/100,ol=X.lineWidth;const y1=sz*.06,y2=sz*.12;
+  X.beginPath();X.moveTo(0,0);X.lineTo(sz*.1,0);X.lineTo(sz*.13,-y1);X.lineTo(sz*.52,-y1);X.lineTo(sz*.55,0);X.lineTo(sz,0);X.stroke();
+  X.beginPath();X.moveTo(sz*.08,0);X.lineTo(sz*.11,y1);X.lineTo(sz*.48,y1);X.lineTo(sz*.51,0);X.stroke();
+  if(cp>4){X.beginPath();X.moveTo(sz*.18,-y1);X.lineTo(sz*.2,-y2);X.lineTo(sz*.42,-y2);X.lineTo(sz*.44,-y1);X.stroke()}
+  if(cp>6){X.beginPath();X.moveTo(sz*.32,-y2);X.lineTo(sz*.32,-y2*2.5);X.lineTo(sz*.48,-y2*2.5);X.stroke();X.strokeRect(sz*.48-1.5,-y2*2.5-1.5,3,3)}
+  X.lineWidth=ol*.4;const pn=Math.floor(cp*1.3);for(let i=0;i<pn;i++){const px=sz*(.07+i*.09);if(px>sz*.92)break;X.strokeRect(px-1.2,-y1-4.5,2.4,2.4);if(dt>.5)X.strokeRect(px-1.2,y1+2.1,2.4,2.4)}
+  for(let i=0;i<cp;i++){const px=sz*(.1+i*.1);if(px>sz*.9)break;fc(px,0,1.3)}
+  X.lineWidth=ol;
+}
+
+function drawCelticBraid(sz,t,ri){
+  const cp=V('cplx'),w=sz*.1,ol=X.lineWidth;
+  const segs=3+Math.floor(cp*.5);
+  for(let i=0;i<segs;i++){const f=i/segs,nx=(i+1)/segs,x1=sz*f,x2=sz*nx;const yo=((i%2)?-1:1)*w;
+    X.beginPath();X.moveTo(x1,w*.25);X.bezierCurveTo(x1+(x2-x1)*.33,yo+w*.25,x1+(x2-x1)*.66,yo+w*.25,x2,w*.25);X.stroke();
+    X.beginPath();X.moveTo(x1,-w*.25);X.bezierCurveTo(x1+(x2-x1)*.33,yo-w*.25,x1+(x2-x1)*.66,yo-w*.25,x2,-w*.25);X.stroke();
+    X.beginPath();X.moveTo(x1,w*.25);X.bezierCurveTo(x1+(x2-x1)*.33,-yo+w*.25,x1+(x2-x1)*.66,-yo+w*.25,x2,w*.25);X.stroke();
+    X.beginPath();X.moveTo(x1,-w*.25);X.bezierCurveTo(x1+(x2-x1)*.33,-yo-w*.25,x1+(x2-x1)*.66,-yo-w*.25,x2,-w*.25);X.stroke()}
+  for(let i=0;i<=segs;i++){const x=sz*(i/segs);ci(x,0,2.5);fc(x,0,1)}
+  X.lineWidth=ol*.35;X.beginPath();X.moveTo(0,-w*1.3);X.lineTo(sz,-w*1.3);X.stroke();X.beginPath();X.moveTo(0,w*1.3);X.lineTo(sz,w*1.3);X.stroke();X.lineWidth=ol;
+}
+
+function drawSacredGeo(sz,t,ri){
+  const cp=V('cplx'),r=sz*.16,ol=X.lineWidth;
+  const n=Math.max(2,Math.floor(cp*.6));
+  for(let i=0;i<n;i++){ci(sz*((i+1)/(n+1)),0,r)}
+  X.lineWidth=ol*.4;X.beginPath();X.moveTo(0,0);X.lineTo(sz,0);X.stroke();
+  if(cp>3){const tx=sz*.5,ts=r*.7;X.lineWidth=ol;X.beginPath();for(let i=0;i<3;i++){const a=i*TAU/3-HP;X.lineTo(tx+Math.cos(a)*ts,Math.sin(a)*ts)}X.closePath();X.stroke();X.beginPath();for(let i=0;i<3;i++){const a=i*TAU/3+HP;X.lineTo(tx+Math.cos(a)*ts*.8,Math.sin(a)*ts*.8)}X.closePath();X.stroke()}
+  if(cp>5){dots(sz*.5,0,r*1.3,12,1,t*.08)}
+  X.lineWidth=ol;
+}
+
+function drawCrystalShard(sz,t,ri){
+  const cp=V('cplx'),tp=V('taper')/100,ol=X.lineWidth;
+  const shards=3+Math.floor(cp*.6);
+  for(let i=0;i<shards;i++){
+    const f=i/shards,len=sz*(.35+.65*(1-Math.abs(f-.3)*2.5))*(1-tp*.15),w=len*.07*(1+f*.4);
+    const a=(f-.45)*.45,bx=sz*f*.25;
+    X.save();X.translate(bx,0);X.rotate(a);
+    X.beginPath();X.moveTo(0,-w);X.lineTo(len*.25,-w*1.4);X.lineTo(len*.65,-w*.55);X.lineTo(len,0);X.lineTo(len*.65,w*.55);X.lineTo(len*.25,w*1.4);X.lineTo(0,w);X.closePath();X.stroke();
+    X.lineWidth=ol*.3;X.beginPath();X.moveTo(len*.08,0);X.lineTo(len*.92,0);X.stroke();X.beginPath();X.moveTo(len*.25,-w*1.2);X.lineTo(len*.65,w*.35);X.stroke();
+    X.lineWidth=ol;X.restore();
+  }
+}
+
+function drawChainLink(sz,t,ri){
+  const cp=V('cplx'),ol=X.lineWidth;
+  const links=2+Math.floor(cp*.45),lw2=sz/links,lh=lw2*.4;
+  for(let i=0;i<links;i++){const lx=i*lw2;const r=lh*.35;X.beginPath();X.moveTo(lx+r,-lh);X.lineTo(lx+lw2-r,-lh);X.arc(lx+lw2-r,-lh+r,r,-HP,0);X.lineTo(lx+lw2,lh-r);X.arc(lx+lw2-r,lh-r,r,0,HP);X.lineTo(lx+r,lh);X.arc(lx+r,lh-r,r,HP,PI);X.lineTo(lx,-lh+r);X.arc(lx+r,-lh+r,r,PI,PI*1.5);X.closePath();X.stroke();fc(lx+lw2*.5,0,1.3)}
+  X.lineWidth=ol;
+}
+
+function drawRayBurst(sz,t,ri){
+  const cp=V('cplx'),tp=V('taper')/100,ol=X.lineWidth;
+  const rays=5+Math.floor(cp*1.8);
+  for(let i=0;i<rays;i++){const f=i/(rays-1);const a=(f-.5)*.35;const len=sz*(.25+.75*(1-Math.abs(f-.5)*1.7));const w=1.8*(1-tp*.4)*(1-f*.2);
+    X.beginPath();X.moveTo(0,0);const ca=Math.cos(a),sa=Math.sin(a);X.lineTo(ca*len-sa*w,sa*len+ca*w);X.lineTo(ca*(len+3),sa*(len+3));X.lineTo(ca*len+sa*w,sa*len-ca*w);X.closePath();X.stroke()}
+  ci(0,0,sz*.04);X.lineWidth=ol;
+}
+
+function drawHelixCoil(sz,t,ri){
+  const cp=V('cplx'),amp=sz*.1,ol=X.lineWidth,pts=80+cp*12;
+  X.beginPath();for(let i=0;i<=pts;i++){const f=i/pts,px=sz*f,py=Math.sin(f*PI*cp*.55+t)*amp;i===0?X.moveTo(px,py):X.lineTo(px,py)}X.stroke();
+  X.beginPath();for(let i=0;i<=pts;i++){const f=i/pts,px=sz*f,py=Math.sin(f*PI*cp*.55+t+PI)*amp;i===0?X.moveTo(px,py):X.lineTo(px,py)}X.stroke();
+  X.lineWidth=ol*.35;const rungs=Math.floor(cp*1.8);for(let i=0;i<rungs;i++){const f=(i+1)/(rungs+1),px=sz*f;X.beginPath();X.moveTo(px,Math.sin(f*PI*cp*.55+t)*amp);X.lineTo(px,Math.sin(f*PI*cp*.55+t+PI)*amp);X.stroke()}
+  X.lineWidth=ol;
+}
+
+function drawArrowHead(sz,t,ri){
+  const cp=V('cplx'),tp=V('taper')/100,ol=X.lineWidth,w=sz*.13*(1-tp*.25);
+  X.beginPath();X.moveTo(0,-w);X.lineTo(sz*.65,-w*.75);X.lineTo(sz,0);X.lineTo(sz*.65,w*.75);X.lineTo(0,w);X.lineTo(sz*.12,0);X.closePath();X.stroke();
+  if(cp>3){X.lineWidth=ol*.4;for(let i=0;i<Math.min(4,Math.floor(cp*.35));i++){const off=sz*(.12+i*.11);X.beginPath();X.moveTo(off,-w*(1-i*.13));X.lineTo(off+sz*.1,0);X.lineTo(off,w*(1-i*.13));X.stroke()}}
+  fc(sz*.06,0,1.2);X.lineWidth=ol;
+}
+
+const FNS={mechPetal:drawMechPetal,sharpBlade:drawSharpBlade,seraphWing:drawSeraphWing,gearCluster:drawGearCluster,dotRay:drawDotRay,cathedral:drawCathedral,turbineFan:drawTurbineFan,circuitTrace:drawCircuitTrace,celticBraid:drawCelticBraid,sacredGeo:drawSacredGeo,crystalShard:drawCrystalShard,chainLink:drawChainLink,rayBurst:drawRayBurst,helixCoil:drawHelixCoil,arrowHead:drawArrowHead};
+
+// ══════════════════════════════════════════════
+// RING DECORATIONS
+// ══════════════════════════════════════════════
+function ringDeco(ri,dist,t,sym){
+  const lw=V('lw'),cp=V('cplx'),ol=X.lineWidth;
+  if(CK('dA')){X.lineWidth=lw*.3;ci(cx,cy,dist);X.lineWidth=lw*.12;X.setLineDash([1.2,3]);ci(cx,cy,dist-4);X.setLineDash([]);if(cp>6){X.lineWidth=lw*.08;ci(cx,cy,dist+4)}}
+  if(CK('dT')){X.lineWidth=lw*.2;const tn=sym*3;for(let i=0;i<tn;i++){const a=i/tn*TAU+t*.05;const c1=Math.cos(a),s1=Math.sin(a);X.beginPath();X.moveTo(cx+c1*(dist-2.5),cy+s1*(dist-2.5));X.lineTo(cx+c1*(dist+2.5),cy+s1*(dist+2.5));X.stroke()}}
+  if(CK('dD')&&ri%2===0){dots(cx,cy,dist+6,sym*2+Math.floor(cp),1+cp*.06,t*.06*(ri%2?-1:1))}
+  if(CK('dH')&&ri%3===0){X.lineWidth=lw*.15;const hn=sym;for(let i=0;i<hn;i++){const a=i/hn*TAU;for(let j=0;j<4;j++){const off=(j-1.5)*1.8;const aa=a+off/dist;const c1=Math.cos(aa),s1=Math.sin(aa);X.beginPath();X.moveTo(cx+c1*(dist-8),cy+s1*(dist-8));X.lineTo(cx+c1*(dist-14),cy+s1*(dist-14));X.stroke()}}}
+  if(CK('dO')&&ri%2===1&&cp>4){const n=sym;for(let i=0;i<n;i++){const a=i/n*TAU+t*.06*(ri%2?-1:1);const ox=cx+Math.cos(a)*dist,oy=cy+Math.sin(a)*dist;X.save();X.translate(ox,oy);X.rotate(a+PI/4);X.lineWidth=lw*.35;X.strokeRect(-3,-3,6,6);if(cp>7){ci(0,0,2)}X.restore()}}
+  if(CK('dS')&&ri%2===0){X.lineWidth=lw*.15;const sn=sym*2;for(let i=0;i<sn;i++){const a=i/sn*TAU;const ma=(a+(i+1)/sn*TAU)/2;const mr=dist+4+1.5*Math.sin(i*3);X.beginPath();X.arc(cx+Math.cos(ma)*mr,cy+Math.sin(ma)*mr,dist*.025,0,TAU);X.stroke()}}
+  X.lineWidth=ol;
+}
+
+// ══════════════════════════════════════════════
+// MAIN RENDER (called with explicit time for export)
+// ══════════════════════════════════════════════
+function renderFrame(w,h,cxx,cyy,t,gpVal){
+  const sym=V('sym'),ringN=V('rings'),space=V('rSp'),esz=V('eSz'),rSpd=V('rSpd')/1000,pAmt=V('pulse')/500,altRotOn=CK('altR'),mirr=CK('mirror'),gMode=SL('gMode'),lw=V('lw'),glI=V('glow')/100,sCol=$('cSt').value,gCol=$('cGl').value,szVar=V('sVar')/100;
+  const oldCx=cx,oldCy=cy;
+  cx=cxx;cy=cyy;
+
+  if(glI>0){X.shadowColor=gCol;X.shadowBlur=glI*35}else{X.shadowColor='transparent';X.shadowBlur=0}
+  X.strokeStyle=sCol;X.fillStyle=sCol;X.lineWidth=lw;X.lineCap='round';X.lineJoin='round';
+
+  // draw bg
+  X.fillStyle=$('cBg').value;X.fillRect(0,0,w,h);
+  const bn=V('bgN')/100;if(bn>0&&nC){X.globalAlpha=bn*.1;X.drawImage(nC,0,0,w,h);X.globalAlpha=1}
+  X.strokeStyle=sCol;X.fillStyle=sCol;
+
+  drawCore(t);
+
+  if(SL('mixMode')==='autoMix'){/* autoIdx managed outside */}
+  let gF;
+  if(gMode==='outward'||gMode==='cascade')gF=Math.min(gpVal,1);
+  else if(gMode==='breathe')gF=.5+.5*Math.sin(t*.35);
+  else gF=1;
+
+  for(let r=0;r<ringN;r++){
+    let rg;
+    if(gMode==='outward')rg=Math.max(0,Math.min(1,gF*ringN-r));
+    else if(gMode==='cascade')rg=Math.max(0,Math.min(1,gF*(ringN+4)-r));
+    else rg=gF;
+    if(rg<=0)continue;
+    const bd=V('cSz')*1.15+r*space,p=Math.sin(t*1.2+r*.7)*pAmt*bd,dist=bd+p;
+    const rot=t*rSpd*(altRotOn&&r%2?-1:1)*(1+r*.1);
+    const sv=1+szVar*(r%3===0?.3:r%3===1?-.15:0);
+    const lsz=esz*(.5+r*.08)*rg*sv;
+    X.globalAlpha=rg*.25;ringDeco(r,dist,t,sym);X.globalAlpha=rg;
+    const pat=getPatRing(r);const fn=FNS[pat]||drawMechPetal;
+    for(let i=0;i<sym;i++){
+      const a=i/sym*TAU+rot;
+      elemAt(a,dist,lsz,t,r,fn);
+      if(mirr){X.save();X.translate(cx,cy);X.rotate(a);X.scale(1,-1);X.rotate(-a);X.translate(-cx,-cy);elemAt(a,dist,lsz,t,r,fn);X.restore()}
+    }
+  }
+  X.globalAlpha=1;X.shadowBlur=0;
+  cx=oldCx;cy=oldCy;
+}
+
+function renderInf(t){
+  const sym=V('sym'),esz=V('eSz'),rSpd=V('rSpd')/1000,lw=V('lw'),glI=V('glow')/100,sCol=$('cSt').value,gCol=$('cGl').value;
+  if(glI>0){X.shadowColor=gCol;X.shadowBlur=glI*35}
+  X.strokeStyle=sCol;X.fillStyle=sCol;X.lineWidth=lw;X.lineCap='round';X.lineJoin='round';
+  drawCore(t);
+  const rate=V('gSpd')/15;
+  if(Math.random()<rate*.016){const pat=SL('mixMode')==='single'?getP():PATS[Math.floor(Math.random()*PATS.length)];infR.push({born:t,dist:V('cSz')*1.15,spd:10+Math.random()*18,dir:Math.random()>.5?1:-1,pat})}
+  const mx=Math.max(W,H)*.72;
+  infR=infR.filter(ring=>{ring.dist+=ring.spd*.016*(V('gSpd')/22);if(ring.dist>mx)return false;const al=Math.max(0,1-ring.dist/mx);X.globalAlpha=al*.12;ci(cx,cy,ring.dist);X.globalAlpha=al;const sz=esz*(.4+ring.dist/mx*.55);const fn=FNS[ring.pat]||drawMechPetal;const rot=t*rSpd*ring.dir;for(let i=0;i<sym;i++){const a=i/sym*TAU+rot;elemAt(a,ring.dist,sz,t,0,fn)}return true});
+  X.globalAlpha=1;X.shadowBlur=0;
+}
+
+// ══════════════════════════════════════════════
+// MAIN LOOP
+// ══════════════════════════════════════════════
+let lt=0,fA=[];
+function loop(ts){
+  if(paused)return;requestAnimationFrame(loop);
+  const dt=(ts-lt)/1000;lt=ts;time+=dt;
+  fA.push(1/dt);if(fA.length>30)fA.shift();$('fps').textContent=Math.round(fA.reduce((a,b)=>a+b)/fA.length)+' FPS';
+  gp+=dt*(V('gSpd')/100);
+  if(SL('mixMode')==='autoMix'){autoT+=dt*.08;if(autoT>=1){autoT=0;autoIdx++}}
+
+  if(SL('gMode')==='infinite'){
+    X.fillStyle=$('cBg').value;X.fillRect(0,0,W,H);
+    const bn=V('bgN')/100;if(bn>0&&nC){X.globalAlpha=bn*.1;X.drawImage(nC,0,0);X.globalAlpha=1}
+    renderInf(time);
+  }else{
+    renderFrame(W,H,cx,cy,time,gp);
+  }
+}
+requestAnimationFrame(loop);
+
+// ══════════════════════════════════════════════
+// EXPORT SYSTEM – 24fps PNG sequence → ZIP
+// ══════════════════════════════════════════════
+function showExport(){$('exportModal').classList.add('show');$('exportStatus').textContent='Ready';$('exportBar').style.width='0%';exportCancel=false}
+function cancelExport(){exportCancel=true;$('exportModal').classList.remove('show')}
+
+async function startExport(){
+  if(exporting)return;exporting=true;exportCancel=false;
+  const dur=parseFloat($('expDur').value);
+  const resVal=$('expRes').value;
+  const resMap={720:[1280,720],1080:[1920,1080],1440:[2560,1440],2160:[3840,2160]};
+  const[ew,eh]=resMap[resVal]||[1920,1080];
+  const fps=24;
+  const totalFrames=Math.floor(dur*fps);
+
+  const ec=document.createElement('canvas');ec.width=ew;ec.height=eh;
+  const ex=ec.getContext('2d');
+  // generate noise for export canvas size
+  const enC=document.createElement('canvas');enC.width=ew;enC.height=eh;
+  const enx=enC.getContext('2d'),enim=enx.createImageData(ew,eh);
+  for(let i=0;i<enim.data.length;i+=4){const v=Math.random()*18;enim.data[i]=v;enim.data[i+1]=v;enim.data[i+2]=v+Math.random()*22;enim.data[i+3]=255}
+  enx.putImageData(enim,0,0);
+  const oldNoise=nC;nC=enC;
+
+  const zip=new JSZip();
+  const folder=zip.folder('mandala_frames');
+
+  $('exportStatus').textContent=`Rendering 0 / ${totalFrames} frames...`;
+
+  // save current state
+  const savedTime=time,savedGp=gp,savedAutoIdx=autoIdx,savedAutoT=autoT;
+  const savedCx=cx,savedCy=cy;
+  const realX=X;
+
+  // Swap global drawing context to export canvas
+  X=ex;
+  const ecx=ew/2,ecy=eh/2;
+
+  for(let f=0;f<totalFrames;f++){
+    if(exportCancel)break;
+
+    const frameTime=f/fps;
+    const frameGp=frameTime*(V('gSpd')/100);
+
+    cx=ecx;cy=ecy;
+
+    if(SL('mixMode')==='autoMix'){
+      autoT=frameTime*.08;autoIdx=Math.floor(autoT);autoT-=autoIdx;
+    }
+
+    renderFrame(ew,eh,ecx,ecy,frameTime,frameGp);
+
+    // Capture frame
+    const blob=await new Promise(r=>ec.toBlob(r,'image/png'));
+    const num=String(f).padStart(5,'0');
+    folder.file(`frame_${num}.png`,blob);
+
+    // Update progress
+    const pct=((f+1)/totalFrames*100).toFixed(1);
+    $('exportBar').style.width=pct+'%';
+    $('exportStatus').textContent=`Rendering ${f+1} / ${totalFrames} frames... (${pct}%)`;
+
+    // Yield to UI
+    await new Promise(r=>setTimeout(r,0));
+  }
+
+  // Restore globals
+  X=realX;
+  cx=savedCx;cy=savedCy;
+  time=savedTime;gp=savedGp;autoIdx=savedAutoIdx;autoT=savedAutoT;
+  nC=oldNoise;
+
+  if(!exportCancel){
+    $('exportStatus').textContent='Compressing ZIP...';
+    $('exportBar').style.width='100%';
+    const content=await zip.generateAsync({type:'blob'},meta=>{
+      $('exportStatus').textContent=`Compressing... ${meta.percent.toFixed(0)}%`;
+    });
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(content);
+    a.download=`mandala_${Date.now()}_${fps}fps_${ew}x${eh}.zip`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    $('exportStatus').textContent='Done! ZIP downloaded.';
+  }else{
+    $('exportStatus').textContent='Cancelled.';
+  }
+  exporting=false;
+}
+
+// ══════════════════════════════════════════════
+// RANDOMIZE & PRESETS
+// ══════════════════════════════════════════════
+function RND(){
+  const R={sym:[4,16],rings:[3,12],rSp:[25,90],eSz:[15,70],cplx:[3,12],taper:[10,80],det:[30,100],sVar:[10,80],cSz:[35,130],cLay:[2,7],gSpd:[10,50],rSpd:[3,28],pulse:[0,38],lw:[.5,2.5],glow:[0,55],bgN:[5,32]};
+  for(const[id,[mn,mx]]of Object.entries(R)){const e=$(id);if(e){const vv=mn+Math.random()*(mx-mn);e.value=parseFloat(e.step)<1?vv.toFixed(1):Math.round(vv);uv(e)}}
+  const rp=PATS[Math.floor(Math.random()*PATS.length)];document.querySelectorAll('[data-p]').forEach(b=>b.classList.toggle('a',b.dataset.p===rp));
+  const cores=['gearCore','eyeCore','compassCore','sigilCore','flowerCore','spiralCore','clockCore'];$('core').value=cores[Math.floor(Math.random()*cores.length)];
+  ['mirror','altR','dA','dD','dT','dH','dO','dS'].forEach(id=>$(id).checked=Math.random()>.2);
+  const modes=['single','perRing','autoMix'];$('mixMode').value=modes[Math.floor(Math.random()*3)];mixChg();
+  if(SL('mixMode')==='perRing'){buildRR();document.querySelectorAll('#ringRows select').forEach(s=>{s.value=PATS[Math.floor(Math.random()*PATS.length)];s.dispatchEvent(new Event('change'))})}
+  RST();
+}
+
+function PRE(n){
+  const P={
+    mech1:{sym:8,rings:7,rSp:52,eSz:40,cplx:8,taper:40,det:80,sVar:50,cSz:72,cLay:4,gSpd:25,rSpd:12,pulse:18,lw:1.1,glow:35,bgN:16,pattern:'mechPetal',core:'gearCore',mirror:true,altR:true,gMode:'outward',cSt:'#ffffff',cBg:'#000003',cGl:'#1a3388',dA:true,dD:true,dT:true,dH:true,dO:true,dS:true,mixMode:'single'},
+    seraph1:{sym:6,rings:6,rSp:62,eSz:55,cplx:10,taper:22,det:92,sVar:40,cSz:82,cLay:5,gSpd:18,rSpd:5,pulse:22,lw:1.1,glow:48,bgN:22,pattern:'seraphWing',core:'eyeCore',mirror:true,altR:true,gMode:'cascade',cSt:'#ffffff',cBg:'#000005',cGl:'#2244bb',dA:true,dD:true,dT:true,dH:true,dO:true,dS:true,mixMode:'single'},
+    blade1:{sym:12,rings:8,rSp:44,eSz:44,cplx:9,taper:55,det:72,sVar:45,cSz:55,cLay:3,gSpd:30,rSpd:18,pulse:12,lw:.9,glow:22,bgN:12,pattern:'sharpBlade',core:'gearCore',mirror:false,altR:true,gMode:'outward',cSt:'#ffffff',cBg:'#000000',cGl:'#3355ee',dA:true,dD:true,dT:true,dH:false,dO:false,dS:false,mixMode:'single'},
+    cosmic1:{sym:8,rings:9,rSp:48,eSz:30,cplx:11,taper:38,det:100,sVar:55,cSz:88,cLay:6,gSpd:12,rSpd:4,pulse:28,lw:1.1,glow:55,bgN:25,pattern:'gearCluster',core:'eyeCore',mirror:true,altR:true,gMode:'breathe',cSt:'#eeeeff',cBg:'#000008',cGl:'#3355cc',dA:true,dD:true,dT:true,dH:true,dO:true,dS:true,mixMode:'single'},
+    mix1:{sym:8,rings:8,rSp:52,eSz:40,cplx:9,taper:38,det:82,sVar:55,cSz:72,cLay:4,gSpd:22,rSpd:9,pulse:20,lw:1.1,glow:40,bgN:18,core:'gearCore',mirror:true,altR:true,gMode:'cascade',cSt:'#ffffff',cBg:'#000004',cGl:'#1a3399',dA:true,dD:true,dT:true,dH:true,dO:true,dS:true,mixMode:'perRing',ringPats:['mechPetal','sharpBlade','gearCluster','seraphWing','dotRay','cathedral','turbineFan','crystalShard']},
+    mix2:{sym:10,rings:9,rSp:46,eSz:35,cplx:10,taper:35,det:88,sVar:48,cSz:62,cLay:4,gSpd:20,rSpd:7,pulse:18,lw:1,glow:42,bgN:20,core:'sigilCore',mirror:true,altR:true,gMode:'outward',cSt:'#ccddff',cBg:'#000006',cGl:'#1a33aa',dA:true,dD:true,dT:true,dH:true,dO:true,dS:true,mixMode:'perRing',ringPats:['circuitTrace','sacredGeo','gearCluster','celticBraid','circuitTrace','arrowHead','dotRay','chainLink','helixCoil']},
+    clock1:{sym:12,rings:7,rSp:48,eSz:32,cplx:8,taper:42,det:78,sVar:45,cSz:90,cLay:4,gSpd:20,rSpd:8,pulse:15,lw:1,glow:38,bgN:18,pattern:'gearCluster',core:'clockCore',mirror:true,altR:true,gMode:'outward',cSt:'#ffffff',cBg:'#020205',cGl:'#2244aa',dA:true,dD:true,dT:true,dH:true,dO:true,dS:true,mixMode:'perRing',ringPats:['gearCluster','mechPetal','turbineFan','chainLink','gearCluster','arrowHead','dotRay']},
+    mix3:{sym:6,rings:7,rSp:58,eSz:50,cplx:10,taper:30,det:90,sVar:45,cSz:78,cLay:5,gSpd:15,rSpd:5,pulse:22,lw:1.2,glow:45,bgN:25,core:'compassCore',mirror:true,altR:true,gMode:'cascade',cSt:'#ffffff',cBg:'#020208',cGl:'#3344aa',dA:true,dD:true,dT:true,dH:true,dO:true,dS:true,mixMode:'perRing',ringPats:['cathedral','mechPetal','crystalShard','seraphWing','gearCluster','rayBurst','turbineFan']},
+  };
+  const p=P[n];if(!p)return;
+  for(const[k,vv]of Object.entries(p)){
+    if(k==='pattern'){document.querySelectorAll('[data-p]').forEach(b=>b.classList.toggle('a',b.dataset.p===vv))}
+    else if(k==='ringPats'){}
+    else if(['mirror','altR','dA','dD','dT','dH','dO','dS'].includes(k)){$(k).checked=vv}
+    else if(['core','gMode','mixMode'].includes(k)){$(k).value=vv}
+    else if(['cSt','cBg','cGl'].includes(k)){$(k).value=vv}
+    else{const e=$(k);if(e){e.value=vv;const s=e.nextElementSibling;if(s&&s.classList.contains('v'))s.textContent=vv}}
+  }
+  mixChg();
+  if(p.mixMode==='perRing'&&p.ringPats){buildRR();const sels=document.querySelectorAll('#ringRows select');p.ringPats.forEach((pat,i)=>{if(sels[i]){sels[i].value=pat;ringPats[i]=pat}})}
+  RST();
+}
+
+PRE('mech1');
+</script>
+</body>
+</html>
